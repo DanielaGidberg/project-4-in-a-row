@@ -3,7 +3,7 @@ import React from "react";
 // קומפוננטה שמציירת את לוח המשחק
 // מקבלת את הלוח עצמו, גודל הלוח, פונקציה ללחיצה על עמודה
 // ונתונים שקשורים לאנימציית הנפילה
-function Board({ board, rows, cols, onColumnClick, animRow, animCol, animPlayer }) {
+function Board({ board, rows, cols, onColumnClick, animRow, animCol, animPlayer, player1Color, player2Color, winningCells }) {
 
     const boardStyle = {
         // אובייקט עיצוב ללוח עצמו (ה-container של כל התאים)
@@ -16,16 +16,14 @@ function Board({ board, rows, cols, onColumnClick, animRow, animCol, animPlayer 
     };
 
     const getCellColor = (value) => {
-        // פונקציה שמחזירה צבע לפי הערך הקבוע של התא בלוח
-        if (value === 1) return "#ff4444";
-        if (value === 2) return "#ffff44";
+        if (value === 1) return player1Color;
+        if (value === 2) return player2Color;
         return "#e6e6e6";
     };
 
     const getAnimColor = () => {
-        // פונקציה שמחזירה את צבע האסימון בזמן אנימציה
-        if (animPlayer === 1) return "#ff4444";
-        if (animPlayer === 2) return "#ffff44";
+        if (animPlayer === 1) return player1Color;
+        if (animPlayer === 2) return player2Color;
         return "#e6e6e6";
     };
 
@@ -46,6 +44,10 @@ function Board({ board, rows, cols, onColumnClick, animRow, animCol, animPlayer 
                         animRow === rowIndex && animCol === colIndex;
                     // בודק אם התא הנוכחי הוא התא שבו נמצא האסימון בזמן האנימציה
 
+                    const isWinningCell = winningCells?.some(
+                        (p) => p.row === rowIndex && p.col === colIndex
+                    );
+
                     return (
                         <div
                             key={`${rowIndex}-${colIndex}`}
@@ -56,28 +58,15 @@ function Board({ board, rows, cols, onColumnClick, animRow, animCol, animPlayer 
 
                             style={{
                                 width: "50px",
-                                // רוחב התא
-
                                 height: "50px",
-                                // גובה התא
-
                                 borderRadius: "50%",
-                                // הופך את התא לעיגול
-
                                 backgroundColor: getCellColor(cell),
-                                // צבע התא לפי הערך הקבוע בלוח
-
-                                border: "1px solid #bbb",
-                                // מסגרת דקה מסביב לתא
-
+                                border: isWinningCell ? "4px solid #111" : "1px solid #bbb",
                                 cursor: "pointer",
-                                // מציג יד כשעוברים עם העכבר
-
                                 position: "relative",
-                                // מאפשר לשים אלמנט פנימי במיקום מוחלט
-
                                 overflow: "hidden",
-                                // מונע מהאנימציה לגלוש מחוץ לעיגול
+                                boxShadow: isWinningCell ? "0 0 10px rgba(0,0,0,0.45)" : "none",
+                                transform: isWinningCell ? "scale(1.05)" : "scale(1)"
                             }}
                         >
                             {isAnimatingCell && (
