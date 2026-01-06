@@ -8,11 +8,15 @@ function Board({ board, rows, cols, onColumnClick, animRow, animCol, animPlayer,
     const boardStyle = {
         // אובייקט עיצוב ללוח עצמו (ה-container של כל התאים)
         display: "grid",
-        gridTemplateRows: `repeat(${rows}, 50px)`,
-        gridTemplateColumns: `repeat(${cols}, 50px)`,
+        gridTemplateRows: `repeat(${rows}, 56px)`,
+        gridTemplateColumns: `repeat(${cols}, 56px)`,
         gap: "8px",
-        justifyContent: "center",
         marginTop: "20px",
+        padding: "20px",
+        borderRadius: "26px",
+        background: "linear-gradient(180deg, #1e4fa8, #143a7a)",
+        boxShadow: "0 18px 40px rgba(0,0,0,0.25)",
+        border: "3px solid rgba(0,0,0,0.25)",
     };
 
     const getCellColor = (value) => {
@@ -28,71 +32,61 @@ function Board({ board, rows, cols, onColumnClick, animRow, animCol, animPlayer,
     };
 
     return (
-        <div style={boardStyle}>
-            {/* זה ה-container של כל הלוח, עם העיצוב שהגדרנו */}
+            <div style={boardStyle}>
+                {/* זה ה-container של כל הלוח, עם העיצוב שהגדרנו */}
 
-            {board.map((row, rowIndex) =>
-                // מעבר על כל שורה במטריצה של הלוח
-                // rowIndex הוא מספר השורה
+                {board.map((row, rowIndex) =>
+                    // מעבר על כל שורה במטריצה של הלוח
+                    // rowIndex הוא מספר השורה
 
-                row.map((cell, colIndex) => {
-                    // מעבר על כל תא בשורה הנוכחית
-                    // cell הוא הערך של התא (null / 1 / 2)
-                    // colIndex הוא מספר העמודה
+                    row.map((cell, colIndex) => {
+                        // מעבר על כל תא בשורה הנוכחית
+                        // cell הוא הערך של התא (null / 1 / 2)
+                        // colIndex הוא מספר העמודה
 
-                    const isAnimatingCell =
-                        animRow === rowIndex && animCol === colIndex;
-                    // בודק אם התא הנוכחי הוא התא שבו נמצא האסימון בזמן האנימציה
+                        const isAnimatingCell =
+                            animRow === rowIndex && animCol === colIndex;
+                        // בודק אם התא הנוכחי הוא התא שבו נמצא האסימון בזמן האנימציה
 
-                    const isWinningCell = winningCells?.some(
-                        (p) => p.row === rowIndex && p.col === colIndex
-                    );
+                        const isWinningCell = winningCells?.some(
+                            (p) => p.row === rowIndex && p.col === colIndex
+                        );
 
-                    return (
-                        <div
-                            key={`${rowIndex}-${colIndex}`}
-                            // מזהה ייחודי לתא כדי ש-React ידע לעקוב אחריו
+                        return (
+                            <div
+                                key={`${rowIndex}-${colIndex}`}
+                                onClick={() => onColumnClick(colIndex)}
 
-                            onClick={() => onColumnClick(colIndex)}
-                            // לחיצה על תא מפעילה פעולה לפי העמודה שלו
+                                style={{
+                                    width: "50px",
+                                    height: "50px",
+                                    borderRadius: "50%",
+                                    backgroundColor: getCellColor(cell),
+                                    border: isWinningCell ? "4px solid #111" : "1px solid #bbb",
+                                    cursor: "pointer",
+                                    position: "relative",
+                                    overflow: "hidden",
+                                    boxShadow: isWinningCell ? "0 0 10px rgba(0,0,0,0.45)" : "none",
+                                    transform: isWinningCell ? "scale(1.05)" : "scale(1)"
 
-                            style={{
-                                width: "50px",
-                                height: "50px",
-                                borderRadius: "50%",
-                                backgroundColor: getCellColor(cell),
-                                border: isWinningCell ? "4px solid #111" : "1px solid #bbb",
-                                cursor: "pointer",
-                                position: "relative",
-                                overflow: "hidden",
-                                boxShadow: isWinningCell ? "0 0 10px rgba(0,0,0,0.45)" : "none",
-                                transform: isWinningCell ? "scale(1.05)" : "scale(1)"
-                            }}
-                        >
-                            {isAnimatingCell && (
-                                // אם התא הזה משתתף באנימציה
+                                }}
+                            >
+                                {isAnimatingCell && (
+                                    <div
+                                        style={{
+                                            position: "absolute",
+                                            inset: 0,
+                                            borderRadius: "50%",
+                                            backgroundColor: getAnimColor(),
+                                        }}
+                                    />
+                                )}
+                            </div>
+                        );
+                    })
+                )}
+            </div>
 
-                                <div
-                                    style={{
-                                        position: "absolute",
-                                        // ממקם את האסימון ביחס לתא
-
-                                        inset: 0,
-                                        // גורם לאסימון למלא את כל התא
-
-                                        borderRadius: "50%",
-                                        // שומר על צורה עגולה
-
-                                        backgroundColor: getAnimColor(),
-                                        // צבע האסימון בזמן האנימציה
-                                    }}
-                                />
-                            )}
-                        </div>
-                    );
-                })
-            )}
-        </div>
     );
 }
 

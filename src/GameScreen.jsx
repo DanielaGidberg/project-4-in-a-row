@@ -15,6 +15,10 @@ function GameScreen({ rows, cols, player1Color, player2Color, gameMode, onBack }
     const [winner, setWinner] = useState(null);
     const [winningCells, setWinningCells] = useState([]);
 
+    const [missMessage, setMissMessage] = useState("");
+
+    const [missColor, setMissColor] = useState("#222");
+
     const [turnTimeLeft, setTurnTimeLeft] = useState(10);
 
     const currentColor = currentPlayer === 1 ? player1Color : player2Color;
@@ -25,8 +29,7 @@ function GameScreen({ rows, cols, player1Color, player2Color, gameMode, onBack }
             .map(() => Array(cols).fill(null));
     };
 
-    // אתחול משחק כשנכנסים למסך או משנים rows/cols
-    useEffect(() => {
+    const initGame = () => {
         setBoard(createEmptyBoard());
         setCurrentPlayer(1);
         setWinner(null);
@@ -36,15 +39,39 @@ function GameScreen({ rows, cols, player1Color, player2Color, gameMode, onBack }
         setAnimRow(null);
         setAnimCol(null);
         setTurnTimeLeft(10);
+        setMissMessage("");
+        setMissColor("#222");
+    };
+
+
+    // אתחול משחק כשנכנסים למסך או משנים rows/cols
+    useEffect(() => {
+        initGame();
     }, [rows, cols]);
+
+    const resetGame = () => {
+        initGame();
+    };
+
+    // טיימר לתצוגת ההודעה של הפיספוס
+    useEffect(() => {
+        if (!missMessage) return;
+
+        const id = setTimeout(() => {
+            setMissMessage("");
+        }, 2500);
+
+        return () => clearTimeout(id);
+    }, [missMessage]);
 
     // טיימר תור
     useEffect(() => {
         if (winner) return;
         if (isAnimating) return;
-        if (isComputerThinking) return;
-
         if (turnTimeLeft <= 0) {
+            if (gameMode === "computer" && currentPlayer === 2) {
+                return;
+            }
             setCurrentPlayer((p) => (p === 1 ? 2 : 1));
             setTurnTimeLeft(10);
             return;
@@ -56,18 +83,6 @@ function GameScreen({ rows, cols, player1Color, player2Color, gameMode, onBack }
 
         return () => clearTimeout(timerId);
     }, [turnTimeLeft, winner, isAnimating, isComputerThinking]);
-
-    const resetGame = () => {
-        setBoard(createEmptyBoard());
-        setCurrentPlayer(1);
-        setWinner(null);
-        setWinningCells([]);
-        setIsAnimating(false);
-        setIsComputerThinking(false);
-        setAnimRow(null);
-        setAnimCol(null);
-        setTurnTimeLeft(10);
-    };
 
     // מחזיר את הרביעייה המנצחת (בדיוק 4 תאים) או null
     const getWinningLine = (b, row, col, player) => {
@@ -121,18 +136,48 @@ function GameScreen({ rows, cols, player1Color, player2Color, gameMode, onBack }
         return valid;
     };
 
+    const getDropRow = (b, col) => {
+        for (let r = rows - 1; r >= 0; r--) {
+            if (b[r][col] === null) return r;
+        }
+        return -1; // עמודה מלאה
+    };
+
+    const getWinningMovesForPlayer = (b, player) => {
+        const winningMoves = [];
+
+        for (let c = 0; c < cols; c++) {
+            if (b[0]?.[c] !== null) continue; // עמודה מלאה
+
+            const r = getDropRow(b, c);
+            if (r === -1) continue;
+
+            const copy = b.map((rowArr) => [...rowArr]);
+            copy[r][c] = player;
+
+            const line = getWinningLine(copy, r, c, player);
+            if (line) {
+                winningMoves.push({ row: r, col: c, line });
+            }
+        }
+
+        return winningMoves;
+    };
+
     // פונקציית ליבה: מניחה אסימון (גם לאדם וגם למחשב)
     const placeToken = async (col) => {
         if (winner) return;
         if (isAnimating) return;
 
-        let targetRow = -1;
-        for (let r = rows - 1; r >= 0; r--) {
-            if (board[r][col] === null) {
-                targetRow = r;
-                break;
-            }
-        }
+        setMissMessage("");
+        setMissColor("#222");
+
+        const winningMovesBefore = getWinningMovesForPlayer(board, currentPlayer); //כל המהלכים שהיו מנצחים אם היו שמים.
+        const hadWinningMoveBefore = winningMovesBefore.length > 0; //האם בכלל היה משהו לנצח
+        const winningColsBefore = winningMovesBefore.map((m) => m.col); //רק העמודות המנצחות (לבדיקה פשוטה).
+        const choseAWinningCol = winningColsBefore.includes(col); //האם השחקן באמת בחר באחת העמודות המנצחות.
+
+        const targetRow = getDropRow(board, col);
         if (targetRow === -1) return;
 
         // אנימציה
@@ -148,6 +193,11 @@ function GameScreen({ rows, cols, player1Color, player2Color, gameMode, onBack }
         newBoard[targetRow][col] = currentPlayer;
 
         const winningLine = getWinningLine(newBoard, targetRow, col, currentPlayer);
+
+        if (!winningLine && hadWinningMoveBefore && !choseAWinningCol) {
+            setMissMessage("You missed a winning move!");
+            setMissColor(currentPlayer === 1 ? player1Color : player2Color);
+        }
 
         if (winningLine) {
             setBoard(newBoard);
@@ -174,14 +224,10 @@ function GameScreen({ rows, cols, player1Color, player2Color, gameMode, onBack }
     const handleHumanClick = (col) => {
         if (winner) return;
         if (isAnimating) return;
-
-        // במצב מול מחשב: אדם לא יכול לשחק בתור מחשב
         if (gameMode === "computer" && currentPlayer === 2) return;
-
-        // בזמן שהמחשב "חושב" – לא מאפשרים קליקים
         if (isComputerThinking) return;
 
-        placeToken(col);
+        void placeToken(col);
     };
 
     // מהלך מחשב
@@ -216,7 +262,7 @@ function GameScreen({ rows, cols, player1Color, player2Color, gameMode, onBack }
     // מפעיל מחשב כשהוא בתור
     useEffect(() => {
         if (gameMode === "computer" && currentPlayer === 2 && !winner && !isAnimating) {
-            makeComputerMove();
+            void makeComputerMove();
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [gameMode, currentPlayer, winner, isAnimating, board]);
@@ -228,15 +274,31 @@ function GameScreen({ rows, cols, player1Color, player2Color, gameMode, onBack }
                 display: "flex",
                 justifyContent: "center",
                 alignItems: "flex-start",
-                paddingTop: "40px",
+                paddingTop: "16px",
                 fontFamily: "Arial, sans-serif",
+                background: "linear-gradient(180deg, #f2f4f8, #e6e9f0)",
             }}
         >
-            <div style={{ width: "360px", textAlign: "center" }}>
-                <h1 style={{ margin: "0 0 20px 0" }}>Game Screen</h1>
+            <div style={{
+                width: "fit-content",
+                textAlign: "center",
+                background: "#fff",
+                borderRadius: "18px",
+                padding: "24px 24px",
+                boxShadow: "0 12px 30px rgba(0,0,0,0.15)",
+            }}>
+                {/*<h1 style={{ margin: "0 0 12px 0", fontSize: "28px" }}>*/}
+                {/*    משחק 4 בשורה*/}
+                {/*</h1>*/}
+
 
                 {!winner && (
-                    <div style={{ marginBottom: "12px" }}>
+                    <div style={{
+                        marginBottom: "16px",
+                        padding: "10px",
+                        borderRadius: "12px",
+                        background: "rgba(0,0,0,0.04)",
+                    }}>
                         <div style={{ fontSize: "18px" }}>
                             Current Player:{" "}
                             <b style={{ color: currentColor }}>
@@ -250,7 +312,6 @@ function GameScreen({ rows, cols, player1Color, player2Color, gameMode, onBack }
 
                         <div style={{ fontSize: "14px", opacity: 0.8 }}>
                             Time left: <b>{turnTimeLeft}s</b>
-                            {isComputerThinking && <span> (Computer thinking...)</span>}
                         </div>
                     </div>
                 )}
@@ -275,8 +336,47 @@ function GameScreen({ rows, cols, player1Color, player2Color, gameMode, onBack }
                     winningCells={winningCells}
                 />
 
-                <AppButton text="Reset Game" onClick={resetGame} />
-                <AppButton text="Back to Setup" onClick={onBack} />
+                {/* Missed move message area */}
+                <div
+                    style={{
+                        marginTop: "8px",
+                        minHeight: "32px",
+                        display: "flex",
+                        justifyContent: "center",
+                        alignItems: "center",
+                    }}
+                >
+                    {missMessage && (
+                        <div
+                            style={{
+                                maxWidth: "260px",
+                                padding: "6px 10px",
+                                borderRadius: "8px",
+                                background: missColor,
+                                opacity: 0.85,
+                                fontWeight: 800,
+                                fontSize: "13px",
+                                textAlign: "center",
+                                lineHeight: "1.3",
+                                color: "#000",
+                                border: "2px solid #000",
+                            }}
+                        >
+                            {missMessage}
+                        </div>
+                    )}
+                </div>
+
+                {/* Action buttons */}
+                <div style={{
+                    marginTop: "16px",
+                    display: "flex",
+                    justifyContent: "center",
+                    gap: "10px",
+                }}>
+                    <AppButton text="Reset Game" onClick={resetGame} />
+                    <AppButton text="Back to Setup" onClick={onBack} />
+                </div>
             </div>
         </div>
     );

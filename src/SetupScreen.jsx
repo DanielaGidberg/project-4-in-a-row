@@ -2,12 +2,13 @@ import React, { useState } from "react";
 
 import AppButton from "./AppButton.jsx";
 import AppInput from "./AppInput.jsx";
+import FeaturesSidebar from "./FeaturesSidebar.jsx";
 
 const COLORS = [
     { name: "Red", value: "#ff4444" },
     { name: "Blue", value: "#4444ff" },
     { name: "Green", value: "#44ff44" },
-    { name: "Yellow", value: "#ffff44" },
+    { name: "Yellow", value: "#ffec00" },
     { name: "Purple", value: "#ff44ff" },
     { name: "Orange", value: "#ff8844" },
 ];
@@ -19,7 +20,7 @@ function SetupScreen({ onStart }) {
     const [gameMode, setGameMode] = useState("human");
 
     const [player1Color, setPlayer1Color] = useState("#ff4444");//שמירת הצבע שכל שחקן בחר
-    const [player2Color, setPlayer2Color] = useState("#ffff44");
+    const [player2Color, setPlayer2Color] = useState("#ffec00");
 
     const handleStart = () => {
         onStart(rows, cols, player1Color, player2Color, gameMode);
@@ -38,8 +39,6 @@ function SetupScreen({ onStart }) {
         backgroundColor: color,
     });
 
-
-
     return (
         <div
             style={{
@@ -47,41 +46,25 @@ function SetupScreen({ onStart }) {
                 display: "flex",
                 justifyContent: "center",
                 alignItems: "flex-start",
-                paddingTop: "40px",
+                paddingTop: "16px",
                 fontFamily: "Arial, sans-serif",
+                background: "linear-gradient(180deg, #f2f4f8, #e6e9f0)",
             }}
         >
-            <div style={{ width: "360px", textAlign: "center" }}>
-                <h1 style={{ margin: "0 0 24px 0" }}>
+            <FeaturesSidebar />
+
+            <div style={{
+                width: "360px",
+                textAlign: "center",
+                background: "#fff",
+                borderRadius: "18px",
+                padding: "24px 20px",
+                boxShadow: "0 12px 30px rgba(0,0,0,0.15)",
+                marginRight: "340px",
+            }}>
+                <h1 style={{ margin: "0 0 12px 0", fontSize: "28px"}}>
                     4 In a Row - Setup
                 </h1>
-
-                <div
-                    style={{
-                        marginBottom: "18px",
-                        padding: "14px",
-                        borderRadius: "12px",
-                        border: "2px solid #222",
-                        background: "rgba(0,0,0,0.04)",
-                        textAlign: "left",
-                        fontSize: "14px",
-                        lineHeight: "1.5",
-                    }}
-                >
-                    <h2 style={{ margin: "0 0 10px 0", fontSize: "16px" }}>What this app supports</h2>
-                    <ul style={{ margin: 0, paddingLeft: "18px" }}>
-                        <li>Custom board size (rows/cols) before the game starts</li>
-                        <li>2 human players taking turns</li>
-                        <li>Token “gravity” (token always falls to the lowest empty cell)</li>
-                        <li>Winner detection (4 in a row)</li>
-                        <li>Falling animation</li>
-                    </ul>
-
-                    <p style={{ margin: "10px 0 0 0", fontWeight: 700 }}>
-                        Next steps: colors, reset, undo, timers, replay (as required by the assignment)
-                    </p>
-                </div>
-
 
                 <div
                     style={{

@@ -3,7 +3,6 @@ import SetupScreen from "./SetupScreen.jsx";
 import GameScreen from "./GameScreen.jsx";
 
 
-
 function App() {
     const [screen, setScreen] = useState("setup");
     const [rows, setRows] = useState(6);
@@ -11,9 +10,9 @@ function App() {
     const [gameMode, setGameMode] = useState("human");
 
     const [player1Color, setPlayer1Color] = useState("#ff4444");
-    const [player2Color, setPlayer2Color] = useState("#ffff44");
+    const [player2Color, setPlayer2Color] = useState("#ffec00");
 
-    const startGame = (chosenRows, chosenCols, c1, c2, mode) => { // ⭐ שינוי
+    const startGame = (chosenRows, chosenCols, c1, c2, mode) => {
         setRows(chosenRows);
         setCols(chosenCols);
         setPlayer1Color(c1);
